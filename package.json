@@ -1,5 +1,5 @@
 {
-  "name": "fabric-browser",
+  "name": "fabric-browseronly",
   "description": "Fork of fabric.js with only browser rendering support.",
   "homepage": "http://fabricjs.com/",
   "version": "1.6.0-rc.1",
@@ -29,10 +29,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/jacob-beltran/fabric-browser"
+    "url": "https://github.com/jacob-beltran/fabric-browseronly"
   },
   "bugs": {
-    "url": "https://github.com/jacob-beltran/fabric-browser/issues"
+    "url": "https://github.com/jacob-beltran/fabric-browseronly/issues"
   },
   "license": "MIT",
   "scripts": {
