@@ -2,7 +2,7 @@
   "name": "fabric-browseronly",
   "description": "Fork of fabric.js with only browser rendering support.",
   "homepage": "http://fabricjs.com/",
-  "version": "1.6.0-rc.1c",
+  "version": "1.6.0-rc.1d",
   "author": "Juriy Zaytsev <kangax@gmail.com>",
   "contributors": [
     "Jacob Beltran <self@jacobbeltran.com> (http://jacobbeltran.com)"
@@ -36,7 +36,7 @@
   },
   "license": "MIT",
   "scripts": {
-    "build": "node build.js modules=ALL exclude=json,gestures",
+    "build": "node build.js modules=ALL exclude=json,gestures; node build.js modules=animation,easing dest=dist/minimal/ no-svg-export; node build.js modules=text,serialization,parser,image_filters,easing,animation dest=dist/basic/",
     "test": "node test.js",
     "lint": "jshint src && jscs src",
     "lint_tests": "jshint test/unit --config .jshintrc_tests",
@@ -51,6 +51,5 @@
     "jshint": "2.8.x",
     "qunit": "0.7.2",
     "istanbul": "0.3.x"
-  },
-  "main": "./dist/fabric.js"
+  }
 }
