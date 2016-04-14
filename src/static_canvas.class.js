@@ -194,8 +194,15 @@
     /**
      * @private
      */
+    _isRetinaScaling: function() {
+      return (fabric.devicePixelRatio !== 1 && this.enableRetinaScaling);
+    },
+
+    /**
+     * @private
+     */
     _initRetinaScaling: function() {
-      if (fabric.devicePixelRatio === 1 || !this.enableRetinaScaling) {
+      if (!this._isRetinaScaling()) {
         return;
       }
 
@@ -375,14 +382,9 @@
     _setImageSmoothing: function() {
       var ctx = this.getContext();
 
-      if (typeof ctx.imageSmoothingEnabled !== 'undefined') {
-        ctx.imageSmoothingEnabled = this.imageSmoothingEnabled;
-        return;
-      }
-      ctx.webkitImageSmoothingEnabled = this.imageSmoothingEnabled;
-      ctx.mozImageSmoothingEnabled    = this.imageSmoothingEnabled;
-      ctx.msImageSmoothingEnabled     = this.imageSmoothingEnabled;
-      ctx.oImageSmoothingEnabled      = this.imageSmoothingEnabled;
+      ctx.imageSmoothingEnabled = ctx.imageSmoothingEnabled || ctx.webkitImageSmoothingEnabled
+        || ctx.mozImageSmoothingEnabled || ctx.msImageSmoothingEnabled || ctx.oImageSmoothingEnabled;
+      ctx.imageSmoothingEnabled = this.imageSmoothingEnabled;
     },
 
     /**
@@ -397,13 +399,13 @@
       if (typeof image === 'string') {
         fabric.util.loadImage(image, function(img) {
           this[property] = new fabric.Image(img, options);
-          callback && callback();
+          callback && callback(img);
         }, this, options && options.crossOrigin);
       }
       else {
         options && image.setOptions(options);
         this[property] = image;
-        callback && callback();
+        callback && callback(image);
       }
 
       return this;
@@ -886,7 +888,6 @@
       }
 
       this.fire('after:render');
-      canvasToDrawOn.restore();
       return this;
     },
 
@@ -1489,7 +1490,6 @@
      */
     dispose: function () {
       this.clear();
-      this.interactive && this.removeListeners();
       return this;
     },
 

@@ -106,11 +106,11 @@
   function _setStrokeFillOpacity(attributes) {
     for (var attr in colorAttributes) {
 
-      if (typeof attributes[colorAttributes[attr]] === 'undefined') {
+      if (typeof attributes[colorAttributes[attr]] === 'undefined' || attributes[attr] === '') {
         continue;
       }
 
-      if (!attributes[attr]) {
+      if (typeof attributes[attr] === 'undefined') {
         if (!fabric.Object.prototype[attr]) {
           continue;
         }
@@ -219,7 +219,7 @@
                     skewY +
                     ')',
 
-        transforms = '(?:' + transform + '(?:' + commaWsp + transform + ')*' + ')',
+        transforms = '(?:' + transform + '(?:' + commaWsp + '*' + transform + ')*' + ')',
 
         transformList = '^\\s*(?:' + transforms + '?)\\s*$',
 
@@ -910,7 +910,8 @@
 
       // very crude parsing of style contents
       for (var i = 0, len = styles.length; i < len; i++) {
-        var styleContents = styles[i].textContent;
+        // IE9 doesn't support textContent, but provides text instead.
+        var styleContents = styles[i].textContent || styles[i].text;
 
         // remove comments
         styleContents = styleContents.replace(/\/\*[\s\S]*?\*\//g, '');
@@ -1022,24 +1023,47 @@
     },
 
     /**
-     * Creates markup containing SVG font faces
+     * Creates markup containing SVG font faces,
+     * font URLs for font faces must be collected by developers
+     * and are not extracted from the DOM by fabricjs
      * @param {Array} objects Array of fabric objects
      * @return {String}
      */
     createSVGFontFacesMarkup: function(objects) {
-      var markup = '';
+      var markup = '', fontList = { }, obj, fontFamily,
+          style, row, rowIndex, char, charIndex,
+          fontPaths = fabric.fontPaths;
 
       for (var i = 0, len = objects.length; i < len; i++) {
-        if (objects[i].type !== 'text' || !objects[i].path) {
+        obj = objects[i];
+        fontFamily = obj.fontFamily;
+        if (obj.type.indexOf('text') === -1 || fontList[fontFamily] || !fontPaths[fontFamily]) {
           continue;
         }
+        fontList[fontFamily] = true;
+        if (!obj.styles) {
+          continue;
+        }
+        style = obj.styles;
+        for (rowIndex in style) {
+          char = style[rowIndex];
+          for (charIndex in row) {
+            char = row[charIndex];
+            fontFamily = char.fontFamily;
+            if (!fontList[fontFamily] && fontPaths[fontFamily]) {
+              fontList[fontFamily] = true;
+            }
+          }
+        }
+      }
 
+      for (var j in fontList) {
         markup += [
           //jscs:disable validateIndentation
-          '@font-face {',
-            'font-family: ', objects[i].fontFamily, '; ',
-            'src: url(\'', objects[i].path, '\')',
-          '}\n'
+          '\t\t@font-face {\n',
+            '\t\t\tfont-family: \'', j, '\';\n',
+            '\t\t\tsrc: url(\'', fontPaths[j], '\');\n',
+          '\t\t}\n'
           //jscs:enable validateIndentation
         ].join('');
       }
@@ -1048,7 +1072,7 @@
         markup = [
           //jscs:disable validateIndentation
           '\t<style type="text/css">',
-            '<![CDATA[',
+            '<![CDATA[\n',
               markup,
             ']]>',
           '</style>\n'

@@ -144,13 +144,6 @@
 
     /**
      * @private
-     * @type Boolean
-     * @default
-     */
-    _skipFillStrokeCheck: false,
-
-    /**
-     * @private
      */
     _reSpace: /\s|\n/,
 
@@ -657,6 +650,9 @@
       charWidth = this._applyCharStylesGetWidth(ctx, _char, lineIndex, i, decl || {});
       textDecoration = textDecoration || this.textDecoration;
 
+      if (decl && decl.textBackgroundColor) {
+        this._removeShadow(ctx);
+      }
       shouldFill && ctx.fillText(_char, left, top);
       shouldStroke && ctx.strokeText(_char, left, top);
 
@@ -743,60 +739,44 @@
      * @param {CanvasRenderingContext2D} ctx Context to render on
      */
     _renderTextLinesBackground: function(ctx) {
-      if (!this.textBackgroundColor && !this.styles) {
-        return;
-      }
+      this.callSuper('_renderTextLinesBackground', ctx);
 
-      ctx.save();
-
-      if (this.textBackgroundColor) {
-        ctx.fillStyle = this.textBackgroundColor;
-      }
-
-      var lineHeights = 0;
+      var lineTopOffset = 0, heightOfLine,
+          lineWidth, lineLeftOffset,
+          leftOffset = this._getLeftOffset(),
+          topOffset = this._getTopOffset(),
+          line, _char, style;
 
       for (var i = 0, len = this._textLines.length; i < len; i++) {
+        heightOfLine = this._getHeightOfLine(ctx, i);
+        line = this._textLines[i];
 
-        var heightOfLine = this._getHeightOfLine(ctx, i);
-        if (this._textLines[i] === '') {
-          lineHeights += heightOfLine;
+        if (line === '' || !this.styles || !this._getLineStyle(i)) {
+          lineTopOffset += heightOfLine;
           continue;
         }
 
-        var lineWidth = this._getLineWidth(ctx, i),
-            lineLeftOffset = this._getLineLeftOffset(lineWidth);
+        lineWidth = this._getLineWidth(ctx, i);
+        lineLeftOffset = this._getLineLeftOffset(lineWidth);
 
-        if (this.textBackgroundColor) {
-          ctx.fillStyle = this.textBackgroundColor;
+        for (var j = 0, jlen = line.length; j < jlen; j++) {
+          style = this._getStyleDeclaration(i, j);
+          if (!style || !style.textBackgroundColor) {
+            continue;
+          }
+          _char = line[j];
+
+          ctx.fillStyle = style.textBackgroundColor;
 
           ctx.fillRect(
-            this._getLeftOffset() + lineLeftOffset,
-            this._getTopOffset() + lineHeights,
-            lineWidth,
+            leftOffset + lineLeftOffset + this._getWidthOfCharsAt(ctx, i, j),
+            topOffset + lineTopOffset,
+            this._getWidthOfChar(ctx, _char, i, j) + 1,
             heightOfLine / this.lineHeight
           );
         }
-        if (this._getLineStyle(i)) {
-          for (var j = 0, jlen = this._textLines[i].length; j < jlen; j++) {
-            var style = this._getStyleDeclaration(i, j);
-            if (style && style.textBackgroundColor) {
-
-              var _char = this._textLines[i][j];
-
-              ctx.fillStyle = style.textBackgroundColor;
-
-              ctx.fillRect(
-                this._getLeftOffset() + lineLeftOffset + this._getWidthOfCharsAt(ctx, i, j),
-                this._getTopOffset() + lineHeights,
-                this._getWidthOfChar(ctx, _char, i, j) + 1,
-                heightOfLine / this.lineHeight
-              );
-            }
-          }
-        }
-        lineHeights += heightOfLine;
+        lineTopOffset += heightOfLine;
       }
-      ctx.restore();
     },
 
     /**
@@ -821,7 +801,7 @@
      */
     _applyCharStylesGetWidth: function(ctx, _char, lineIndex, charIndex, decl) {
       var charDecl = this._getStyleDeclaration(lineIndex, charIndex),
-          styleDeclaration = decl || clone(charDecl), width;
+          styleDeclaration = (decl && clone(decl)) || clone(charDecl), width;
 
       this._applyFontStyles(styleDeclaration);
 
@@ -850,7 +830,15 @@
 
       ctx.lineWidth = styleDeclaration.strokeWidth || this.strokeWidth;
       ctx.font = this._getFontDeclaration.call(styleDeclaration);
-      this._setShadow.call(styleDeclaration, ctx);
+
+      //if we want this._setShadow.call to work with styleDeclarion
+      //we have to add those references
+      if (styleDeclaration.shadow) {
+        styleDeclaration.scaleX = this.scaleX;
+        styleDeclaration.scaleY = this.scaleY;
+        styleDeclaration.canvas = this.canvas;
+        this._setShadow.call(styleDeclaration, ctx);
+      }
 
       if (!this.caching || !this._charWidthsCache[cacheProp]) {
         width = ctx.measureText(_char).width;
@@ -1068,28 +1056,6 @@
         height += this._getHeightOfLine(ctx, i);
       }
       return height;
-    },
-
-    /**
-     * This method is overwritten to account for different top offset
-     * @private
-     */
-    _renderTextBoxBackground: function(ctx) {
-      if (!this.backgroundColor) {
-        return;
-      }
-
-      ctx.save();
-      ctx.fillStyle = this.backgroundColor;
-
-      ctx.fillRect(
-        this._getLeftOffset(),
-        this._getTopOffset(),
-        this.width,
-        this.height
-      );
-
-      ctx.restore();
     },
 
     /**
