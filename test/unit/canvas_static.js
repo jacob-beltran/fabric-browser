@@ -445,11 +445,15 @@
       window.alert("toDataURL is not supported by this environment. Some of the tests can not be run.");
     }
     else {
+      var rect = new fabric.Rect({width: 100, height: 100, fill:'red', top: 0, left: 0});
+      canvas.add(rect);
       var dataURL = canvas.toDataURL();
       // don't compare actual data url, as it is often browser-dependent
       // this.assertIdentical(emptyImageCanvasData, canvas.toDataURL('png'));
       equal(typeof dataURL, 'string');
       equal(dataURL.substring(0, 21), 'data:image/png;base64');
+      //we can just compare that the dataUrl generated differs from the dataURl of an empty canvas.
+      equal(dataURL.substring(200, 210) != 'AAAAAAAAAA', true);
     }
   });
 
