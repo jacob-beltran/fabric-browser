@@ -2,8 +2,8 @@
 
   QUnit.module('fabric.Text');
 
-  function createTextObject() {
-    return new fabric.Text('x');
+  function createTextObject(text) {
+    return new fabric.Text(text || 'x');
   }
 
   var CHAR_WIDTH = 20;
@@ -15,7 +15,7 @@
     'left':                      0,
     'top':                       0,
     'width':                     CHAR_WIDTH,
-    'height':                    52.43,
+    'height':                    45.2,
     'fill':                      'rgb(0,0,0)',
     'stroke':                    null,
     'strokeWidth':               1,
@@ -46,11 +46,12 @@
     'globalCompositeOperation':  'source-over',
     'skewX':                      0,
     'skewY':                      0,
-    'transformMatrix':           null  
+    'transformMatrix':            null,
+    'charSpacing':                0
   };
 
-  var TEXT_SVG = '\t<g transform="translate(10.5 26.72)">\n\t\t<text font-family="Times New Roman" font-size="40" font-weight="normal" style="stroke: none; stroke-width: 1; stroke-dasharray: none; stroke-linecap: butt; stroke-linejoin: miter; stroke-miterlimit: 10; fill: rgb(0,0,0); fill-rule: nonzero; opacity: 1;" >\n\t\t\t<tspan x="-10" y="8.98" fill="rgb(0,0,0)">x</tspan>\n\t\t</text>\n\t</g>\n';
-  var TEXT_SVG_JUSTIFIED = '\t<g transform="translate(50.5 26.72)">\n\t\t<text font-family="Times New Roman" font-size="40" font-weight="normal" style="stroke: none; stroke-width: 1; stroke-dasharray: none; stroke-linecap: butt; stroke-linejoin: miter; stroke-miterlimit: 10; fill: rgb(0,0,0); fill-rule: nonzero; opacity: 1;" >\n\t\t\t<tspan x="-50" y="8.98" fill="rgb(0,0,0)">x</tspan>\n\t\t\t<tspan x="30" y="8.98" fill="rgb(0,0,0)">y</tspan>\n\t\t</text>\n\t</g>\n';
+  var TEXT_SVG = '\t<g transform="translate(10.5 26.72)">\n\t\t<text xml:space="preserve" font-family="Times New Roman" font-size="40" font-weight="normal" style="stroke: none; stroke-width: 1; stroke-dasharray: none; stroke-linecap: butt; stroke-linejoin: miter; stroke-miterlimit: 10; fill: rgb(0,0,0); fill-rule: nonzero; opacity: 1; white-space: pre;" >\n\t\t\t<tspan x="-10" y="12.6" fill="rgb(0,0,0)">x</tspan>\n\t\t</text>\n\t</g>\n';
+  var TEXT_SVG_JUSTIFIED = '\t<g transform="translate(50.5 26.72)">\n\t\t<text xml:space="preserve" font-family="Times New Roman" font-size="40" font-weight="normal" style="stroke: none; stroke-width: 1; stroke-dasharray: none; stroke-linecap: butt; stroke-linejoin: miter; stroke-miterlimit: 10; fill: rgb(0,0,0); fill-rule: nonzero; opacity: 1; white-space: pre;" >\n\t\t\t<tspan x="-50" y="12.6" fill="rgb(0,0,0)">x</tspan>\n\t\t\t<tspan x="30" y="12.6" fill="rgb(0,0,0)">y</tspan>\n\t\t</text>\n\t</g>\n';
 
   test('constructor', function() {
     ok(fabric.Text);
@@ -68,6 +69,20 @@
     var text = createTextObject();
     ok(typeof text.toString == 'function');
     equal(text.toString(), '#<fabric.Text (1): { "text": "x", "fontFamily": "Times New Roman" }>');
+  });
+
+  test('_getFontDeclaration', function() {
+    var text = createTextObject();
+    ok(typeof text._getFontDeclaration == 'function', 'has a private method _getFontDeclaration');
+    var fontDecl = text._getFontDeclaration();
+    ok(typeof fontDecl == 'string', 'it returns a string');
+    if (fabric.isLikelyNode) {
+      equal(fontDecl, 'normal  40px "Times New Roman"');
+    }
+    else {
+      equal(fontDecl, ' normal 40px Times New Roman');
+    }
+
   });
 
   test('toObject', function() {
@@ -94,6 +109,28 @@
     equal(text.get('angle'), 55);
   });
 
+  test('lineHeight with single line', function() {
+    var text = createTextObject();
+    text.text = 'text with one line';
+    text.lineHeight = 2;
+    text._initDimensions();
+    var height = text.height;
+    text.lineHeight = 0.5;
+    text._initDimensions();
+    var heightNew = text.height;
+    equal(height, heightNew, 'text height does not change with one single line');
+  });
+
+  test('lineHeight with multi line', function() {
+    var text = createTextObject();
+    text.text = 'text with\ntwo lines';
+    text.lineHeight = 0.1;
+    text._initDimensions();
+    var height = text.height,
+        minimumHeight = text.fontSize * text._fontSizeMult;
+    equal(height > minimumHeight, true, 'text height is always bigger than minimum Height');
+  });
+
   test('set with "hash"', function() {
     var text = createTextObject();
 
@@ -102,6 +139,23 @@
     equal(text.getOpacity(), 0.123);
     equal(text.getFill(), 'red');
     equal(text.get('fontFamily'), 'blah');
+  });
+
+  test('get bounding rect after init', function() {
+    var string = 'Some long text, the quick brown fox jumps over the lazy dog etc... blah blah blah';
+    var text = new fabric.Text(string, {
+      left: 30,
+      top: 30,
+      fill: '#ffffff',
+      fontSize: 24,
+      fontWeight: 'normal',
+      fontFamily: 'Arial',
+      originY: 'bottom'
+    });
+    var br = text.getBoundingRect();
+    text.setCoords();
+    var br2 = text.getBoundingRect();
+    deepEqual(br, br2, 'text bounding box is the same before and after calling setCoords');
   });
 
   test('setShadow', function(){
@@ -158,9 +212,9 @@
 
     var expectedObject = fabric.util.object.extend(fabric.util.object.clone(REFERENCE_TEXT_OBJECT), {
       left: 4.5,
-      top: -4.11,
+      top: -5.75,
       width: 8,
-      height: 20.97,
+      height: 18.08,
       fontSize: 16,
       originX: 'left'
     });
@@ -199,9 +253,9 @@
     var expectedObject = fabric.util.object.extend(fabric.util.object.clone(REFERENCE_TEXT_OBJECT), {
       /* left varies slightly due to node-canvas rendering */
       left:             fabric.util.toFixed(textWithAttrs.left + '', 2),
-      top:              -9.22,
+      top:              -18.54,
       width:            CHAR_WIDTH,
-      height:           161.23,
+      height:           138.99,
       fill:             'rgb(255,255,255)',
       opacity:          0.45,
       stroke:           'blue',
@@ -231,6 +285,11 @@
 
     text.setText('xx');
     equal(text.width, CHAR_WIDTH * 2);
+  });
+
+  test('dimensions without text', function() {
+    var text = new fabric.Text('');
+    equal(text.width, 2);
   });
 
   test('setting fontFamily', function() {

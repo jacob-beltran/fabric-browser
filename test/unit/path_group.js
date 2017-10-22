@@ -34,13 +34,13 @@
   };
 
   var REFERENCE_PATH_GROUP_SVG = '<g style="stroke: none; stroke-width: 1; stroke-dasharray: none; stroke-linecap: butt; stroke-linejoin: miter; stroke-miterlimit: 10; fill: none; fill-rule: nonzero; opacity: 1;" transform="translate(0 0)" >\n' +
-    '\t<path d="M 100 100 L 300 100 L 200 300 z" style="stroke: blue; stroke-width: 3; stroke-dasharray: none; stroke-linecap: butt; stroke-linejoin: miter; stroke-miterlimit: 10; fill: rgb(255,0,0); fill-rule: nonzero; opacity: 1;" transform="" stroke-linecap="round" />\n' +
-    '\t<path d="M 200 200 L 100 200 L 400 50 z" style="stroke: blue; stroke-width: 3; stroke-dasharray: none; stroke-linecap: butt; stroke-linejoin: miter; stroke-miterlimit: 10; fill: rgb(255,0,0); fill-rule: nonzero; opacity: 1;" transform="" stroke-linecap="round" />\n' +
+    '\t<path d="M 100 100 L 300 100 L 200 300 z" style="stroke: rgb(0,0,255); stroke-width: 3; stroke-dasharray: none; stroke-linecap: butt; stroke-linejoin: miter; stroke-miterlimit: 10; fill: rgb(255,0,0); fill-rule: nonzero; opacity: 1;" transform="" stroke-linecap="round" />\n' +
+    '\t<path d="M 200 200 L 100 200 L 400 50 z" style="stroke: rgb(0,0,255); stroke-width: 3; stroke-dasharray: none; stroke-linecap: butt; stroke-linejoin: miter; stroke-miterlimit: 10; fill: rgb(255,0,0); fill-rule: nonzero; opacity: 1;" transform="" stroke-linecap="round" />\n' +
     '</g>\n';
 
   var REFERENCE_PATH_GROUP_SVG_WITH_MATRIX = '<g style="stroke: none; stroke-width: 1; stroke-dasharray: none; stroke-linecap: butt; stroke-linejoin: miter; stroke-miterlimit: 10; fill: none; fill-rule: nonzero; opacity: 1;" transform=" matrix(1 2 3 4 5 6) translate(0 0)" >\n' +
-    '\t<path d="M 100 100 L 300 100 L 200 300 z" style="stroke: blue; stroke-width: 3; stroke-dasharray: none; stroke-linecap: butt; stroke-linejoin: miter; stroke-miterlimit: 10; fill: rgb(255,0,0); fill-rule: nonzero; opacity: 1;" transform="" stroke-linecap="round" />\n' +
-    '\t<path d="M 200 200 L 100 200 L 400 50 z" style="stroke: blue; stroke-width: 3; stroke-dasharray: none; stroke-linecap: butt; stroke-linejoin: miter; stroke-miterlimit: 10; fill: rgb(255,0,0); fill-rule: nonzero; opacity: 1;" transform="" stroke-linecap="round" />\n' +
+    '\t<path d="M 100 100 L 300 100 L 200 300 z" style="stroke: rgb(0,0,255); stroke-width: 3; stroke-dasharray: none; stroke-linecap: butt; stroke-linejoin: miter; stroke-miterlimit: 10; fill: rgb(255,0,0); fill-rule: nonzero; opacity: 1;" transform="" stroke-linecap="round" />\n' +
+    '\t<path d="M 200 200 L 100 200 L 400 50 z" style="stroke: rgb(0,0,255); stroke-width: 3; stroke-dasharray: none; stroke-linecap: butt; stroke-linejoin: miter; stroke-miterlimit: 10; fill: rgb(255,0,0); fill-rule: nonzero; opacity: 1;" transform="" stroke-linecap="round" />\n' +
     '</g>\n';
 
   function getPathElement(path) {
@@ -65,8 +65,8 @@
       }
     }
 
-    var objects = [ ],
-        paths = ["M 100 100 L 300 100 L 200 300 z", "M 200 200 L 100 200 L 400 50 z"],
+    var objects = [],
+        paths = ['M 100 100 L 300 100 L 200 300 z', 'M 200 200 L 100 200 L 400 50 z'],
         numLoadedObjects = 0,
         numTotalObjects = paths.length;
 
@@ -115,11 +115,11 @@
   });
 
   test('parsingDmensionsWithTransformMatrix', function() {
-      var pathA = new fabric.Path("M 100 100 L 300 100 L 200 300 z", {transformMatrix: [2, 0, 0, 2, 0, 0]}),
-          pathB = new fabric.Path("M 200 200 L 100 200 L 400 50 z", {transformMatrix: [3, 0, 0, 3, 0, 0]}),
-          pg = new fabric.PathGroup([pathA, pathB], {toBeParsed: true});
-      equal(pg.width, 1203);
-      equal(pg.height, 603);
+    var pathA = new fabric.Path('M 100 100 L 300 100 L 200 300 z', {transformMatrix: [2, 0, 0, 2, 0, 0]}),
+        pathB = new fabric.Path('M 200 200 L 100 200 L 400 50 z', {transformMatrix: [3, 0, 0, 3, 0, 0]}),
+        pg = new fabric.PathGroup([pathA, pathB], {toBeParsed: true});
+    equal(pg.width, 1203);
+    equal(pg.height, 603);
   });
 
   asyncTest('getObjects', function() {
@@ -166,7 +166,7 @@
     getPathGroupObject(function(pathGroup) {
       ok(typeof pathGroup.toDatalessObject == 'function');
 
-      pathGroup.setSourcePath('http://example.com/');
+      pathGroup.sourcePath = 'http://example.com/';
       var expectedObject = fabric.util.object.extend(fabric.util.object.clone(REFERENCE_PATH_GROUP_OBJECT), {
         'paths': 'http://example.com/',
         'sourcePath': 'http://example.com/'

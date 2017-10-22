@@ -94,11 +94,11 @@
     element.setAttribute('x', '100');
     parent.setAttribute('y', '200');
     grandParent.setAttribute('width', '600');
-  	grandParent.setAttribute('height', '600');
+    grandParent.setAttribute('height', '600');
 
     deepEqual(fabric.parseAttributes(element, 'x y width height'.split(' ')),
       { left: 100, top: 200, width: 600, height: 600 });
- });
+  });
 
   asyncTest('parseElements', function() {
     ok(fabric.parseElements);
@@ -122,7 +122,7 @@
         parsedElements = instances;
       });
     }
-    catch(err) {
+    catch (err) {
       error = err;
     }
     ok(error === undefined, 'No error is raised');
@@ -145,10 +145,10 @@
     var styleObj = fabric.parseStyleAttribute(element);
     // TODO: looks like this still fails with % values
     var expectedObject = {
-      'left':   10,
-      'top':    356.8,
-      'width':  137.93333333333334,
-      'height': 20
+      left:   '10px',
+      top:    '22.3em',
+      width:  '103.45pt',
+      height: '20%'
     };
     deepEqual(styleObj, expectedObject);
   });
@@ -158,7 +158,7 @@
     element.setAttribute('style', 'left:10px');
 
     var expectedObject = {
-      'left': 10
+      left: '10px'
     };
     deepEqual(fabric.parseStyleAttribute(element), expectedObject);
   });
@@ -168,8 +168,8 @@
     element.setAttribute('style', 'left:10px;  top:5px;  ');
 
     var expectedObject = {
-      'left': 10,
-      'top': 5
+      left: '10px',
+      top: '5px'
     };
     deepEqual(fabric.parseStyleAttribute(element), expectedObject);
   });
@@ -179,8 +179,8 @@
     element.setAttribute('style', 'fill:none;  stroke-dasharray: 2 0.4;');
 
     var expectedObject = {
-      'fill': '',
-      'strokeDashArray': [2, 0.4]
+      fill: 'none',
+      'stroke-dasharray': '2 0.4'
     };
     deepEqual(fabric.parseStyleAttribute(element), expectedObject);
   });
@@ -240,6 +240,16 @@
       'stroke': 'rgba(0,128,0,0.5)',
       'fillOpacity': 0.2,
       'strokeOpacity': 0.5
+    };
+    deepEqual(fabric.parseAttributes(element, fabric.Path.ATTRIBUTE_NAMES), expectedObject);
+  });
+
+  test('parse 0 attribute', function() {
+    var element = fabric.document.createElement('path');
+    element.setAttribute('opacity', 0);
+
+    var expectedObject = {
+      opacity: 0,
     };
     deepEqual(fabric.parseAttributes(element, fabric.Path.ATTRIBUTE_NAMES), expectedObject);
   });
@@ -343,12 +353,69 @@
 
     fabric.loadSVGFromString(string, function(objects) {
       rect = objects[0];
-    });
-    
-    setTimeout(function() {
       ok(rect instanceof fabric.Rect);
       start();
-    }, 1000);
+    });
+  });
+
+  asyncTest('parseSVGFromString nested opacity', function() {
+    var string = '<?xml version="1.0" encoding="UTF-8"?>' +
+    '<svg version="1.2" baseProfile="tiny" xml:id="svg-root" width="300" height="400" ' +
+      'viewBox="0 0 300 400" xmlns="http://www.w3.org/2000/svg" ' +
+      'xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xe="http://www.w3.org/2001/xml-events">' +
+      '<defs>' +
+      '<style>' +
+      '.cls-3{opacity:0.5;}' +
+      '.cls-4{opacity:0.5;}' +
+      '</style>' +
+      '</defs>' +
+        '<g fill="red" stroke="#000000" fill-opacity="0.5">' +
+          '<circle cx="50" cy="50" r="50" fill-opacity="1" fill="rgba(255,0,0,0.3)" />' +
+          '<circle cx="150" cy="50" r="50" fill="rgba(0,255,0,0.5)" />' +
+          '<circle cx="50" cy="150" r="50" />' +
+          '<circle cx="150" cy="150" r="50" fill-opacity="0.5" fill="rgb(0,0,255)" />' +
+          '<circle cx="250" cy="50" r="50" fill-opacity="0.5" fill="rgba(0,0,255,0.5)" />' +
+          '<circle cx="250" cy="150" r="50" fill-opacity="1" fill="rgb(0,0,255)" />' +
+        '</g>' +
+        '<g class="cls-3" transform="translate(0,200)">' +
+          '<circle cx="50" cy="50" r="50" class="cls-4" fill="red" />' +
+          '<circle cx="150" cy="50" r="50" fill="red" />' +
+        '</g>' +
+    '</svg>';
+
+    fabric.loadSVGFromString(string, function(objects) {
+      equal(objects[0].fill, 'rgba(255,0,0,0.3)', 'first circle has opacity 0.3 from rgba');
+      equal(objects[0].fillOpacity, 1,'first circle has fill-opacity 1');
+      equal(objects[1].fill, 'rgba(0,255,0,0.25)', 'first circle has opacity 0.5 from rgba and 0.5 from gtoup fill opacity');
+      equal(objects[1].fillOpacity, 0.5,'first circle has fill-opacity 0.5');
+      equal(objects[2].fill, 'rgba(255,0,0,0.5)', 'first circle has opacity 0.5 from group fill opacity');
+      equal(objects[2].fillOpacity, 0.5,'first circle has fill-opacity 0.5');
+      equal(objects[3].fill, 'rgba(0,0,255,0.5)', 'first circle has opacity 0.5 from fill opacity');
+      equal(objects[3].fillOpacity, 0.5,'first circle has fill-opacity 1');
+      equal(objects[4].fill, 'rgba(0,0,255,0.25)', 'first circle has opacity 0.5 from rgba and 0.5 from fill opacity');
+      equal(objects[4].fillOpacity, 0.5,'first circle has fill-opacity 0.5');
+      equal(objects[5].fill, 'rgba(0,0,255,1)', 'first circle has opacity 1 from rgba');
+      equal(objects[5].fillOpacity, 1,'first circle has fill-opacity 1');
+      equal(objects[6].opacity, 0.25, 'opacity is 0.25 for cls-3 * cls-4');
+      equal(objects[7].opacity, 0.5,'opacity is 0.5 from cls-3');
+      start();
+    });
+  });
+
+  asyncTest('parseSVGFromString with svg:namespace', function() {
+    var string = '<?xml version="1.0" standalone="no"?><svg width="100%" height="100%" version="1.1" xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">' +
+                 '<svg:defs><svg:rect id="myrect" width="300" height="100" style="fill:rgb(0,0,255);stroke-width:1;stroke:rgb(0,0,0)"/></svg:defs>' +
+                 '<svg:use xlink:href="#myrect" x="50" y="50" ></svg:use>' +
+                 '</svg>',
+        rect;
+
+    ok(fabric.loadSVGFromString);
+
+    fabric.loadSVGFromString(string, function(objects) {
+      rect = objects[0];
+      ok(rect instanceof fabric.Rect);
+      start();
+    });
   });
 
   // asyncTest('parseSVGDocument', function() {
@@ -510,15 +577,15 @@
       'g polygon.cls': {
         'fill': '#FF0000',
         'stroke': '#000000',
-        'strokeWidth': 0.25
+        'stroke-width': '0.25px'
       },
       'rect': {
         'fill': '#FF0000',
         'stroke': '#000000',
-        'strokeWidth': 0.25
+        'stroke-width': '0.25px'
       },
       'polygon.cls': {
-        'fill' : '',
+        'fill': 'none',
         'stroke': '#0000FF'
       }
     };
@@ -528,7 +595,7 @@
 
     var elPolygon = fabric.document.createElement('polygon'),
         expectedStyle = {
-          'fill' : '',
+          'fill': '',
           'stroke': '#0000FF'
         };
 
@@ -536,7 +603,7 @@
     elPolygon.setAttribute('class', 'cls');
     elPolygon.setAttribute('svgUid', svgUid);
 
-    var style = fabric.parseAttributes(elPolygon, [ ]);
+    var style = fabric.parseAttributes(elPolygon, []);
     deepEqual(style, expectedStyle);
 
     styleElement.textContent = '\t\n';
@@ -544,6 +611,36 @@
     svgUid =  'uniqueId2';
     fabric.cssRules[svgUid] = fabric.getCSSRules(doc);
     deepEqual(fabric.cssRules[svgUid], expectedStyle);
+  });
+
+  test('getCssRule with same selectors', function() {
+
+    ok(fabric.getCSSRules);
+
+    var doc = fabric.document,
+        svgUid = 'uniqueId',
+        styleElement = doc.createElement('style');
+
+    styleElement.textContent = '.cls1,.cls2 { fill: #FF0000;} .cls1 { stroke: #00FF00;} .cls3,.cls1 { stroke-width: 3;}';
+
+    doc.body.appendChild(styleElement);
+
+    var expectedObject = {
+      '.cls1': {
+        'fill': '#FF0000',
+        'stroke': '#00FF00',
+        'stroke-width': '3'
+      },
+      '.cls2': {
+        'fill': '#FF0000'
+      },
+      '.cls3': {
+        'stroke-width': '3'
+      }
+    };
+
+    fabric.cssRules[svgUid] = fabric.getCSSRules(doc);
+    deepEqual(fabric.cssRules[svgUid], expectedObject);
   });
 
 })();

@@ -7,8 +7,7 @@
   if (!Array.prototype.indexOf) {
     /**
      * Finds index of an element in an array
-     * @param {Any} searchElement
-     * @param {Number} [fromIndex]
+     * @param {*} searchElement
      * @return {Number}
      */
     Array.prototype.indexOf = function (searchElement /*, fromIndex */ ) {
@@ -66,7 +65,7 @@
      * @return {Array}
      */
     Array.prototype.map = function(fn, context) {
-      var result = [ ];
+      var result = [];
       for (var i = 0, len = this.length >>> 0; i < len; i++) {
         if (i in this) {
           result[i] = fn.call(context, this[i], i, this);
@@ -118,7 +117,7 @@
      * @return {Array}
      */
     Array.prototype.filter = function(fn, context) {
-      var result = [ ], val;
+      var result = [], val;
       for (var i = 0, len = this.length >>> 0; i < len; i++) {
         if (i in this) {
           val = this[i]; // in case fn mutates this
@@ -135,8 +134,7 @@
     /**
      * Returns "folded" (reduced) result of iterating over elements in an array
      * @param {Function} fn Callback to invoke for each element
-     * @param {Object} [initial] Object to use as the first argument to the first call of the callback
-     * @return {Any}
+     * @return {*}
      */
     Array.prototype.reduce = function(fn /*, initial*/) {
       var len = this.length >>> 0,
@@ -178,7 +176,7 @@
    * @return {Array}
    */
   function invoke(array, method) {
-    var args = slice.call(arguments, 2), result = [ ];
+    var args = slice.call(arguments, 2), result = [];
     for (var i = 0, len = array.length; i < len; i++) {
       result[i] = args.length ? array[i][method].apply(array[i], args) : array[i][method].call(array[i]);
     }
@@ -190,7 +188,7 @@
    * @memberOf fabric.util.array
    * @param {Array} array Array to iterate over
    * @param {String} byProperty
-   * @return {Any}
+   * @return {*}
    */
   function max(array, byProperty) {
     return find(array, byProperty, function(value1, value2) {
@@ -203,7 +201,7 @@
    * @memberOf fabric.util.array
    * @param {Array} array Array to iterate over
    * @param {String} byProperty
-   * @return {Any}
+   * @return {*}
    */
   function min(array, byProperty) {
     return find(array, byProperty, function(value1, value2) {
