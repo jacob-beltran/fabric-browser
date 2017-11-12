@@ -52,7 +52,10 @@
     "eslint": "2.x.x",
     "qunit": "0.9.x",
     "istanbul": "0.4.x",
-    "onchange": "^3.0.2"
+    "onchange": "^3.0.2",
+    "canvas": "1.6.x",
+    "jsdom": "3.x.x",
+    "xmldom": "0.1.x"
   },
   "engines": {
     "node": ">=0.4.0"
