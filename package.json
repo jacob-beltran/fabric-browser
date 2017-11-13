@@ -2,7 +2,7 @@
   "name": "fabric-browseronly",
   "description": "Fork of fabric.js with only browser rendering support.",
   "homepage": "http://fabricjs.com/",
-  "version": "1.6.0",
+  "version": "1.7.19",
   "author": "Juriy Zaytsev <kangax@gmail.com>",
   "contributors": [
     "Jacob Beltran <self@jacobbeltran.com> (http://jacobbeltran.com)"
@@ -22,7 +22,7 @@
     "fabricjs"
   ],
   "browser" : {
-    "canvas" : false,
+    "canvas": false,
     "fs":      false,
     "jsdom":   false,
     "xmldom":  false
@@ -37,20 +37,25 @@
   "license": "MIT",
   "scripts": {
     "build": "node build.js modules=ALL exclude=json,gestures; node build.js modules=animation,easing dest=dist/minimal/ no-svg-export; node build.js modules=text,serialization,parser,image_filters,easing,animation dest=dist/basic/",
+    "build_export": "npm run build && npm run export_dist_to_site",
+    "build:watch": "onchange 'src/**/**' 'test/**/**' 'HEADER.js' 'lib/**/**' -- npm run build_export",
+    "build_with_gestures": "node build.js modules=ALL exclude=json",
     "test": "node test.js",
-    "lint": "jshint src && jscs src",
-    "lint_tests": "jshint test/unit --config .jshintrc_tests",
-    "export_dist_to_site": "cp dist/fabric.js ../fabricjs.com/lib/fabric.js",
+    "lint": "eslint --config .eslintrc.json src",
+    "lint_tests": "eslint test/unit --config .eslintrc_tests",
+    "export_dist_to_site": "cp dist/fabric.js ../fabricjs.com/lib/fabric.js && cp -r src HEADER.js lib ../fabricjs.com/build/files/",
     "export_tests_to_site": "cp test/unit/*.js ../fabricjs.com/test/unit",
     "all": "npm run build && npm run test && npm run lint && npm run lint_tests && npm run export_dist_to_site && npm run export_tests_to_site"
   },
   "devDependencies": {
-    "execSync": "1.0.x",
-    "uglify-js": "2.4.x",
-    "jscs": "2.1.x",
-    "jshint": "2.8.x",
-    "qunit": "0.7.x",
-    "istanbul": "0.4.x"
+    "uglify-js": "2.7.x",
+    "eslint": "2.x.x",
+    "qunit": "0.9.x",
+    "istanbul": "0.4.x",
+    "onchange": "^3.0.2",
+    "canvas": "1.6.x",
+    "jsdom": "3.x.x",
+    "xmldom": "0.1.x"
   },
   "engines": {
     "node": ">=0.4.0"

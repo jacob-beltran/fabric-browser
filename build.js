@@ -12,8 +12,8 @@ buildArgs.forEach(function(arg) {
   buildArgsAsObject[key] = value;
 });
 
-var modulesToInclude = buildArgsAsObject.modules ? buildArgsAsObject.modules.split(',') : [ ];
-var modulesToExclude = buildArgsAsObject.exclude ? buildArgsAsObject.exclude.split(',') : [ ];
+var modulesToInclude = buildArgsAsObject.modules ? buildArgsAsObject.modules.split(',') : [];
+var modulesToExclude = buildArgsAsObject.exclude ? buildArgsAsObject.exclude.split(',') : [];
 
 var distributionPath = buildArgsAsObject.dest || 'dist/';
 var minifier = buildArgsAsObject.minifier || 'uglifyjs';
@@ -145,7 +145,7 @@ var filesToInclude = [
 
   'src/mixins/observable.mixin.js',
   'src/mixins/collection.mixin.js',
-
+  'src/mixins/shared_methods.mixin.js',
   'src/util/misc.js',
   'src/util/arc.js',
   'src/util/lang_array.js',
@@ -161,6 +161,7 @@ var filesToInclude = [
   'src/log.js',
 
   ifSpecifiedInclude('animation', 'src/util/animate.js'),
+  ifSpecifiedInclude('animation', 'src/util/animate_color.js'),
   //'src/util/animate.js',
   ifSpecifiedInclude('easing', 'src/util/anim_ease.js'),
 
@@ -235,6 +236,9 @@ var filesToInclude = [
   ifSpecifiedInclude('image_filters', 'src/filters/multiply_filter.class.js'),
   ifSpecifiedInclude('image_filters', 'src/filters/blend_filter.class.js'),
   ifSpecifiedInclude('image_filters', 'src/filters/resize_filter.class.js'),
+  ifSpecifiedInclude('image_filters', 'src/filters/colormatrix_filter.class.js'),
+  ifSpecifiedInclude('image_filters', 'src/filters/contrast_filter.class.js'),
+  ifSpecifiedInclude('image_filters', 'src/filters/saturate_filter.class.js'),
 
   ifSpecifiedInclude('text', 'src/shapes/text.class.js'),
 
@@ -309,7 +313,8 @@ else {
 
       exec(mininfierCmd, function (error, output) {
         if (error) {
-          console.error('Minification failed using', minifier, 'with', mininfierCmd);
+          console.log('Minification failed using', minifier, 'with', mininfierCmd);
+          console.error(error);
           process.exit(1);
         }
         console.log('Minified using', minifier, 'to ' + distributionPath + 'fabric.min.js');

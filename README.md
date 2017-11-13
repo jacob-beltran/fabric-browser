@@ -10,11 +10,12 @@
 [![Code Climate](https://d3s6mut3hikguw.cloudfront.net/github/kangax/fabric.js/badges/gpa.svg)](https://codeclimate.com/github/kangax/fabric.js)
 [![Coverage Status](https://coveralls.io/repos/kangax/fabric.js/badge.png?branch=master)](https://coveralls.io/r/kangax/fabric.js?branch=master)
 
-<!-- npm, bower versions, downloads -->
+<!-- npm, bower, CDNJS versions, downloads -->
 
 [![Bower version](https://badge.fury.io/bo/fabric.svg)](http://badge.fury.io/bo/fabric)
 [![NPM version](https://badge.fury.io/js/fabric.svg)](http://badge.fury.io/js/fabric)
 [![Downloads per month](https://img.shields.io/npm/dm/fabric.svg)](https://www.npmjs.org/package/fabric)
+[![CDNJS version](https://img.shields.io/cdnjs/v/fabric.js.svg)](https://cdnjs.com/libraries/fabric.js)
 
 <!-- deps status -->
 
@@ -29,7 +30,7 @@
 
 **Fabric.js** is a framework that makes it easy to work with HTML5 canvas element. It is an **interactive object model** on top of canvas element. It is also an **SVG-to-canvas parser**.
 
-<a href="http://fabricjs.com/kitchensink/" target="_blank"><img src="https://github.com/kangax/fabric.js/raw/master/lib/screenshot.png" style="width:300px;box-shadow:rgba(0,0,0,0.3) 0 0 5px"></a>
+<a href="http://fabricjs.com/kitchensink" target="_blank"><img src="https://github.com/kangax/fabric.js/raw/master/lib/screenshot.png" style="width:300px;box-shadow:rgba(0,0,0,0.3) 0 0 5px"></a>
 
 Using Fabric.js, you can create and populate objects on canvas; objects like simple geometrical shapes — rectangles, circles, ellipses, polygons, or more complex shapes consisting of hundreds or thousands of simple paths. You can then scale, move, and rotate these objects with the mouse; modify their properties — color, transparency, z-index, etc. You can also manipulate these objects altogether — grouping them with a simple mouse selection.
 
@@ -42,7 +43,7 @@ Fabric.js allows you to easily create simple shapes like rectangles, circles, tr
 
 ### Goals
 
-- Unit tested (2400+ tests at the moment)
+- Unit tested (4200+ tests at the moment, 75% coverage)
 - Modular (~60 small ["classes", modules, mixins](http://fabricjs.com/docs/))
 - Cross-browser
 - [Fast](https://github.com/kangax/fabric.js/wiki/Focus-on-speed)
@@ -164,13 +165,20 @@ To install Fabric.js using npm, you must first manually [install Cairo](http://c
 
 4. Run test suite
 
-        $ npm test
+Make sure testem is installed
 
+        $ npm install -g testem
+
+Run tests Chrome and Node (by default):
+
+        $ testem
+
+See testem docs for more info: https://github.com/testem/testem
 
 ### Demos
 
 - [Demos](http://fabricjs.com/demos/)
-- [Kitchensink demo](http://fabricjs.com/kitchensink/)
+- [Kitchensink demo](http://fabricjs.com/kitchensink)
 - [Benchmarks](http://fabricjs.com/benchmarks/)
 
 [Who's using Fabric?](http://trends.builtwith.com/javascript/FabricJS)
@@ -247,7 +255,7 @@ For example:
 
 ### Staying in touch
 
-Follow [@fabric.js](http://twitter.com/fabricjs) or [@kangax](http://twitter.com/kangax) on twitter.
+Follow [@fabric.js](http://twitter.com/fabricjs) or [@kangax](http://twitter.com/kangax) or [@AndreaBogazzi](http://twitter.com/AndreaBogazzi) on twitter.
 
 Questions, suggestions — [fabric.js on Google Groups](http://groups.google.com/group/fabricjs).
 
@@ -261,10 +269,12 @@ Get help in Fabric's IRC channel — irc://irc.freenode.net/#fabric.js
 
 ### Credits
 
+- [Andrea Bogazzi](https://twitter.com/AndreaBogazzi) for help with bugs, features, documentation, github issues, and much more.
 - Ernest Delgado for the original idea of [manipulating images on canvas](http://www.ernestdelgado.com/archive/canvas/)
 - [Maxim "hakunin" Chernyak](http://twitter.com/hakunin) for ideas, and help with various parts of the library throughout its life
 - [Sergey Nisnevich](http://nisnya.com) for help with geometry logic
 - [Stefan Kienzle](https://twitter.com/kienzle_s) for help with bugs, features, documentation, github issues
+- [Shutterstock](http://www.shutterstock.com) for the resources used and the time spent using and improving the library.
 - [And all the other GitHub contributors](https://github.com/kangax/fabric.js/graphs/contributors)
 
 ### MIT License
