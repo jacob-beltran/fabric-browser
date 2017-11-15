@@ -21,11 +21,11 @@
     "fabric.js",
     "fabricjs"
   ],
-  "browser" : {
+  "browser": {
     "canvas": false,
-    "fs":      false,
-    "jsdom":   false,
-    "xmldom":  false
+    "fs": false,
+    "jsdom": false,
+    "xmldom": false
   },
   "repository": {
     "type": "git",
