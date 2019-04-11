@@ -195,7 +195,6 @@
                   (typeof event.srcElement !== unknown ? event.srcElement : null),
 
         scroll = fabric.util.getScrollLeftTop(element);
-
     return {
       x: pointerX(event) + scroll.left,
       y: pointerY(event) + scroll.top
@@ -203,23 +202,26 @@
   }
 
   var pointerX = function(event) {
-    // looks like in IE (<9) clientX at certain point (apparently when mouseup fires on VML element)
-    // is represented as COM object, with all the consequences, like "unknown" type and error on [[Get]]
-    // need to investigate later
-        return (typeof event.clientX !== unknown ? event.clientX : 0);
+        return event.clientX;
       },
 
       pointerY = function(event) {
-        return (typeof event.clientY !== unknown ? event.clientY : 0);
+        return event.clientY;
       };
 
   function _getPointer(event, pageProp, clientProp) {
     var touchProp = event.type === 'touchend' ? 'changedTouches' : 'touches';
+    var pointer, eventTouchProp = event[touchProp];
 
-    return (event[touchProp] && event[touchProp][0]
-      ? (event[touchProp][0][pageProp] - (event[touchProp][0][pageProp] - event[touchProp][0][clientProp]))
-        || event[clientProp]
-      : event[clientProp]);
+    if (eventTouchProp && eventTouchProp[0]) {
+      pointer = eventTouchProp[0][clientProp];
+    }
+
+    if (typeof pointer === 'undefined') {
+      pointer = event[clientProp];
+    }
+
+    return pointer;
   }
 
   if (fabric.isTouchSupported) {
@@ -232,7 +234,5 @@
   }
 
   fabric.util.getPointer = getPointer;
-
-  fabric.util.object.extend(fabric.util, fabric.Observable);
 
 })();

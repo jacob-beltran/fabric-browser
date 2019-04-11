@@ -25,12 +25,12 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
         _this = this;
 
     fabric.util.animate({
-      startValue: object.get('left'),
+      startValue: object.left,
       endValue: this.getCenter().left,
       duration: this.FX_DURATION,
       onChange: function(value) {
         object.set('left', value);
-        _this.renderAll();
+        _this.requestRenderAll();
         onChange();
       },
       onComplete: function() {
@@ -60,12 +60,12 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
         _this = this;
 
     fabric.util.animate({
-      startValue: object.get('top'),
+      startValue: object.top,
       endValue: this.getCenter().top,
       duration: this.FX_DURATION,
       onChange: function(value) {
         object.set('top', value);
-        _this.renderAll();
+        _this.requestRenderAll();
         onChange();
       },
       onComplete: function() {
@@ -95,15 +95,12 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
         _this = this;
 
     fabric.util.animate({
-      startValue: object.get('opacity'),
+      startValue: object.opacity,
       endValue: 0,
       duration: this.FX_DURATION,
-      onStart: function() {
-        object.set('active', false);
-      },
       onChange: function(value) {
         object.set('opacity', value);
-        _this.renderAll();
+        _this.requestRenderAll();
         onChange();
       },
       onComplete: function () {

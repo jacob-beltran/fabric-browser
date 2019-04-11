@@ -15,6 +15,7 @@
    * @param {Number} [options.byValue=100] Value to modify the property by
    * @param {Function} [options.easing] Easing function
    * @param {Number} [options.duration=500] Duration of change (in ms)
+   * @param {Function} [options.abort] Additional function with logic. If returns true, onComplete is called.
    */
   function animate(options) {
 
@@ -35,6 +36,8 @@
       options.onStart && options.onStart();
 
       (function tick(ticktime) {
+        // TODO: move abort call after calculation
+        // and pass (current,valuePerc, timePerc) as arguments
         if (abort()) {
           onComplete(endValue, 1, 1);
           return;
@@ -61,8 +64,10 @@
                           fabric.window.oRequestAnimationFrame      ||
                           fabric.window.msRequestAnimationFrame     ||
                           function(callback) {
-                            fabric.window.setTimeout(callback, 1000 / 60);
+                            return fabric.window.setTimeout(callback, 1000 / 60);
                           };
+
+  var _cancelAnimFrame = fabric.window.cancelAnimationFrame || fabric.window.clearTimeout;
 
   /**
    * requestAnimationFrame polyfill based on http://paulirish.com/2011/requestanimationframe-for-smart-animating/
@@ -75,7 +80,11 @@
     return _requestAnimFrame.apply(fabric.window, arguments);
   }
 
+  function cancelAnimFrame() {
+    return _cancelAnimFrame.apply(fabric.window, arguments);
+  }
+
   fabric.util.animate = animate;
   fabric.util.requestAnimFrame = requestAnimFrame;
-
+  fabric.util.cancelAnimFrame = cancelAnimFrame;
 })();

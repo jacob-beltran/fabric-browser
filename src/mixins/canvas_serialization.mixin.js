@@ -201,10 +201,10 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
    * @param {Object} [callback] Receives cloned instance as a first argument
    */
   cloneWithoutData: function(callback) {
-    var el = fabric.document.createElement('canvas');
+    var el = fabric.util.createCanvasElement();
 
-    el.width = this.getWidth();
-    el.height = this.getHeight();
+    el.width = this.width;
+    el.height = this.height;
 
     var clone = new fabric.Canvas(el);
     clone.clipTo = this.clipTo;

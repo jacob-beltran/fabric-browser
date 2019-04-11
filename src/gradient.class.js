@@ -4,7 +4,7 @@
   function getColorStop(el) {
     var style = el.getAttribute('style'),
         offset = el.getAttribute('offset') || 0,
-        color, colorAlpha, opacity;
+        color, colorAlpha, opacity, i;
 
     // convert percents to absolute values
     offset = parseFloat(offset) / (/%$/.test(offset) ? 100 : 1);
@@ -16,7 +16,7 @@
         keyValuePairs.pop();
       }
 
-      for (var i = keyValuePairs.length; i--; ) {
+      for (i = keyValuePairs.length; i--; ) {
 
         var split = keyValuePairs[i].split(/\s*:\s*/),
             key = split[0].trim(),
@@ -171,30 +171,28 @@
      * @return {String} SVG representation of an gradient (linear/radial)
      */
     toSVG: function(object) {
-      var coords = clone(this.coords, true),
+      var coords = clone(this.coords, true), i, len,
           markup, commonAttributes, colorStops = clone(this.colorStops, true),
-          needsSwap = coords.r1 > coords.r2;
+          needsSwap = coords.r1 > coords.r2,
+          transform = this.gradientTransform ? this.gradientTransform.concat() : fabric.iMatrix.concat(),
+          offsetX = object.width / 2 - this.offsetX, offsetY = object.height / 2 - this.offsetY;
       // colorStops must be sorted ascending
       colorStops.sort(function(a, b) {
         return a.offset - b.offset;
       });
 
-      if (!(object.group && object.group.type === 'path-group')) {
-        for (var prop in coords) {
-          if (prop === 'x1' || prop === 'x2') {
-            coords[prop] += this.offsetX - object.width / 2;
-          }
-          else if (prop === 'y1' || prop === 'y2') {
-            coords[prop] += this.offsetY - object.height / 2;
-          }
-        }
+      if (object.type === 'path') {
+        offsetX -= object.pathOffset.x;
+        offsetY -= object.pathOffset.y;
       }
+
+      transform[4] -= offsetX;
+      transform[5] -= offsetY;
 
       commonAttributes = 'id="SVGID_' + this.id +
                      '" gradientUnits="userSpaceOnUse"';
-      if (this.gradientTransform) {
-        commonAttributes += ' gradientTransform="matrix(' + this.gradientTransform.join(' ') + ')" ';
-      }
+      commonAttributes += ' gradientTransform="matrix(' + transform.join(' ') + ')" ';
+
       if (this.type === 'linear') {
         markup = [
           '<linearGradient ',
@@ -225,7 +223,7 @@
           // svg goes from internal to external radius. if radius are inverted, swap color stops.
           colorStops = colorStops.concat();
           colorStops.reverse();
-          for (var i = 0; i < colorStops.length; i++) {
+          for (i = 0, len = colorStops.length; i < len; i++) {
             colorStops[i].offset = 1 - colorStops[i].offset;
           }
         }
@@ -234,19 +232,19 @@
           // i have to shift all colorStops and add new one in 0.
           var maxRadius = Math.max(coords.r1, coords.r2),
               percentageShift = minRadius / maxRadius;
-          for (var i = 0; i < colorStops.length; i++) {
+          for (i = 0, len = colorStops.length; i < len; i++) {
             colorStops[i].offset += percentageShift * (1 - colorStops[i].offset);
           }
         }
       }
 
-      for (var i = 0; i < colorStops.length; i++) {
+      for (i = 0, len = colorStops.length; i < len; i++) {
         var colorStop = colorStops[i];
         markup.push(
           '<stop ',
-            'offset="', (colorStop.offset * 100) + '%',
-            '" style="stop-color:', colorStop.color,
-            (colorStop.opacity !== null ? ';stop-opacity: ' + colorStop.opacity : ';'),
+          'offset="', (colorStop.offset * 100) + '%',
+          '" style="stop-color:', colorStop.color,
+          (typeof colorStop.opacity !== 'undefined' ? ';stop-opacity: ' + colorStop.opacity : ';'),
           '"/>\n'
         );
       }
@@ -260,25 +258,13 @@
     /**
      * Returns an instance of CanvasGradient
      * @param {CanvasRenderingContext2D} ctx Context to render on
-     * @param {Object} object
      * @return {CanvasGradient}
      */
-    toLive: function(ctx, object) {
-      var gradient, prop, coords = fabric.util.object.clone(this.coords);
+    toLive: function(ctx) {
+      var gradient, coords = fabric.util.object.clone(this.coords), i, len;
 
       if (!this.type) {
         return;
-      }
-
-      if (object.group && object.group.type === 'path-group') {
-        for (prop in coords) {
-          if (prop === 'x1' || prop === 'x2') {
-            coords[prop] += -this.offsetX + object.width / 2;
-          }
-          else if (prop === 'y1' || prop === 'y2') {
-            coords[prop] += -this.offsetY + object.height / 2;
-          }
-        }
       }
 
       if (this.type === 'linear') {
@@ -290,7 +276,7 @@
           coords.x1, coords.y1, coords.r1, coords.x2, coords.y2, coords.r2);
       }
 
-      for (var i = 0, len = this.colorStops.length; i < len; i++) {
+      for (i = 0, len = this.colorStops.length; i < len; i++) {
         var color = this.colorStops[i].color,
             opacity = this.colorStops[i].opacity,
             offset = this.colorStops[i].offset;
@@ -319,7 +305,6 @@
      * @see http://www.w3.org/TR/SVG/pservers.html#RadialGradientElement
      */
     fromElement: function(el, instance) {
-
       /**
        *  @example:
        *
@@ -358,7 +343,7 @@
           gradientUnits = el.getAttribute('gradientUnits') || 'objectBoundingBox',
           gradientTransform = el.getAttribute('gradientTransform'),
           colorStops = [],
-          coords, ellipseMatrix;
+          coords, ellipseMatrix, i;
 
       if (el.nodeName === 'linearGradient' || el.nodeName === 'LINEARGRADIENT') {
         type = 'linear';
@@ -374,7 +359,7 @@
         coords = getRadialCoords(el);
       }
 
-      for (var i = colorStopEls.length; i--; ) {
+      for (i = colorStopEls.length; i--; ) {
         colorStops.push(getColorStop(colorStopEls[i]));
       }
 
@@ -391,6 +376,7 @@
       if (gradientTransform || ellipseMatrix !== '') {
         gradient.gradientTransform = fabric.parseTransformAttribute((gradientTransform || '') + ellipseMatrix);
       }
+
       return gradient;
     },
     /* _FROM_SVG_END_ */
@@ -422,7 +408,7 @@
         options[prop] = 0;
       }
       propValue = parseFloat(options[prop], 10);
-      if (typeof options[prop] === 'string' && /^\d+%$/.test(options[prop])) {
+      if (typeof options[prop] === 'string' && /^(\d+\.\d+)%|(\d+)%$/.test(options[prop])) {
         multFactor = 0.01;
       }
       else {

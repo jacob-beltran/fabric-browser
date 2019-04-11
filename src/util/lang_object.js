@@ -1,7 +1,10 @@
 (function() {
   /**
    * Copies all enumerable properties of one js object to another
+   * this does not and cannot compete with generic utils.
    * Does not clone or extend fabric.Object subclasses.
+   * This is mostly for internal use and has extra handling for fabricJS objects
+   * it skips the canvas property in deep cloning.
    * @memberOf fabric.util.object
    * @param {Object} destination Where to copy to
    * @param {Object} source Where to copy from
@@ -25,7 +28,10 @@
       }
       else if (source && typeof source === 'object') {
         for (var property in source) {
-          if (source.hasOwnProperty(property)) {
+          if (property === 'canvas') {
+            destination[property] = extend({ }, source[property]);
+          }
+          else if (source.hasOwnProperty(property)) {
             destination[property] = extend({ }, source[property], deep);
           }
         }
@@ -46,6 +52,7 @@
   /**
    * Creates an empty object and copies all enumerable properties of another object to it
    * @memberOf fabric.util.object
+   * TODO: this function return an empty object if you try to clone null
    * @param {Object} object Object to clone
    * @return {Object}
    */
@@ -58,5 +65,5 @@
     extend: extend,
     clone: clone
   };
-
+  fabric.util.object.extend(fabric.util, fabric.Observable);
 })();

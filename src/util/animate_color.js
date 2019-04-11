@@ -23,6 +23,7 @@
    * @param {Function} [options.onChange] Callback; invoked on every value change
    * @param {Function} [options.onComplete] Callback; invoked when value change is completed
    * @param {Function} [options.colorEasing] Easing function. Note that this function only take two arguments (currentTime, duration). Thus the regular animation easing functions cannot be used.
+   * @param {Function} [options.abort] Additional function with logic. If returns true, onComplete is called.
    */
   function animateColor(fromColor, toColor, duration, options) {
     var startColor = new fabric.Color(fromColor).getSource(),
@@ -37,8 +38,8 @@
       byValue: endColor,
       easing: function (currentTime, startValue, byValue, duration) {
         var posValue = options.colorEasing
-              ? options.colorEasing(currentTime, duration)
-              : 1 - Math.cos(currentTime / duration * (Math.PI / 2));
+          ? options.colorEasing(currentTime, duration)
+          : 1 - Math.cos(currentTime / duration * (Math.PI / 2));
         return calculateColor(startValue, byValue, posValue);
       }
     }));
