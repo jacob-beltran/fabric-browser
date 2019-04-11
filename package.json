@@ -36,32 +36,11 @@
   },
   "license": "MIT",
   "scripts": {
-    "build": "node build.js modules=ALL exclude=json,gestures; node build.js modules=animation,easing dest=dist/minimal/ no-svg-export; node build.js modules=text,serialization,parser,image_filters,easing,animation dest=dist/basic/",
+    "all": "npm run build",
+    "build": "node build.js modules=ALL exclude=json,gestures,accessors; node build.js modules=animation,easing dest=dist/minimal/ no-svg-export; node build.js modules=text,serialization,parser,image_filters,easing,animation dest=dist/basic/",
     "build_export": "npm run build && npm run export_dist_to_site",
     "build:watch": "onchange 'src/**/**' 'test/**/**' 'HEADER.js' 'lib/**/**' -- npm run build_export",
-    "build_with_gestures": "node build.js modules=ALL exclude=json",
-    "test": "node test.js",
-    "jsdom/lib/jsdom/living/generated/utils": false,
-    "jsdom/lib/jsdom/utils": false,
-    "http": false,
-    "https": false,
-    "xmldom": false,
-    "url": false
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/fabricjs/fabric.js"
-  },
-  "bugs": {
-    "url": "https://github.com/fabricjs/fabric.js/issues"
-  },
-  "license": "MIT",
-  "scripts": {
-    "build": "node build.js modules=ALL requirejs exclude=gestures,accessors",
-    "build:fast": "node build.js modules=ALL requirejs fast exclude=gestures,accessors",
-    "build:watch": "onchange 'src/**/**' 'HEADER.js' 'lib/**/**' -- npm run build_export",
-    "build_with_gestures": "node build.js modules=ALL exclude=accessors",
-    "build_export": "npm run build:fast && npm run export_dist_to_site",
+    "build_with_gestures": "node build.js modules=ALL exclude=json,accessors",
     "test:single": "qunit test/node_test_setup.js test/lib",
     "test": "nyc qunit test/node_test_setup.js test/lib test/unit",
     "test:visual": "qunit test/node_test_setup.js test/lib test/visual",
@@ -69,12 +48,12 @@
     "test:all": "npm run test && npm run test:visual",
     "lint": "eslint --config .eslintrc.json src",
     "lint_tests": "eslint test/unit --config .eslintrc_tests && eslint test/visual --config .eslintrc_tests",
-    "export_dist_to_site": "cp dist/fabric.js ../fabricjs.com/lib/fabric.js && cp package.json ../fabricjs.com/lib/package.json && cp -r src HEADER.js lib ../fabricjs.com/build/files/",
-    "export_tests_to_site": "cp test/unit/*.js ../fabricjs.com/test/unit && cp -r test/visual/* ../fabricjs.com/test/visual && cp -r test/fixtures/* ../fabricjs.com/test/fixtures && cp -r test/lib/* ../fabricjs.com/test/lib",
-    "all": "npm run build && npm run test && npm run test:visual && npm run lint && npm run lint_tests && npm run export_dist_to_site && npm run export_tests_to_site",
-    "testem": "testem .",
-    "testem:visual": "testem --file testem-visual.json",
-    "testem:ci": "testem ci"
+    "jsdom/lib/jsdom/living/generated/utils": false,
+    "jsdom/lib/jsdom/utils": false,
+    "http": false,
+    "https": false,
+    "xmldom": false,
+    "url": false
   },
   "optionalDependencies": {
     "canvas": "^2.3.0",
