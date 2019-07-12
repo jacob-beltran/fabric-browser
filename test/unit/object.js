@@ -272,7 +272,7 @@
 
   QUnit.test('toObject without default values', function(assert) {
 
-    var emptyObjectRepr = { version: fabric.version, type: 'object' };
+    var emptyObjectRepr = { version: fabric.version, type: 'object', top: 0, left: 0 };
 
     var augmentedObjectRepr = {
       version: fabric.version,
@@ -293,7 +293,7 @@
     var cObj = new fabric.Object(),
         toObjectObj;
     cObj.includeDefaultValues = false;
-    assert.deepEqual(emptyObjectRepr, cObj.toObject());
+    assert.deepEqual(emptyObjectRepr, cObj.toObject(), 'top and left are always mantained');
 
     cObj.set('left', 10)
       .set('top', 20)
@@ -583,6 +583,21 @@
       assert.equal(object.fxStraighten(), object, 'should work without callbacks');
       done();
     }, 1000);
+  });
+
+  QUnit.test('on off fire are chainable', function(assert) {
+    var object = new fabric.Object({ left: 20, top: 30, width: 40, height: 50, angle: 43 });
+    var ret;
+    ret = object.fire('');
+    assert.equal(ret, object, 'fire is chainable when no events are registered at all');
+    ret = object.on('hi', function() {});
+    assert.equal(ret, object, 'on is chainable');
+    ret = object.fire('bye');
+    assert.equal(ret, object, 'fire is chainable when firing a non registerd event');
+    ret = object.fire('hi');
+    assert.equal(ret, object, 'fire is chainable when firing a registerd event');
+    ret = object.off('hi');
+    assert.equal(ret, object, 'off is chainable');
   });
 
   QUnit.test('observable', function(assert) {

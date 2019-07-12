@@ -84,5 +84,163 @@
     height: 60,
   });
 
+  function polygonWithStroke(canvas, callback) {
+    canvas.set({backgroundColor: '#AAAA77'});
+    var p1 = new fabric.Polygon([
+      {x: 0, y: 216},
+      {x: 125, y: 433},
+      {x: 375, y: 433},
+      {x: 500, y: 216},
+      {x: 375, y: 0},
+      {x: 125, y: 0}
+    ],
+    {
+      fill: 'white'
+    });
+    canvas.add(p1);
+    var p2 = new fabric.Polygon([
+      {x: 0, y: 216},
+      {x: 125, y: 433},
+      {x: 375, y: 433},
+      {x: 500, y: 216},
+      {x: 375, y: 0},
+      {x: 125, y: 0}
+    ],
+    {
+      fill: 'transparent',
+      stroke: '#00AAFFAA',
+      strokeWidth: 15,
+      originX: 'center',
+      originY: 'center'
+    });
+    canvas.add(p2);
+    canvas.setZoom(0.4);
+    canvas.renderAll();
+    callback(canvas.lowerCanvasEl);
+  }
+
+  tests.push({
+    test: 'polygon postion independently from strokeWidth and origin',
+    code: polygonWithStroke,
+    golden: 'polygonWithStroke.png',
+    percentage: 0.09,
+    width: 210,
+    height: 210,
+  });
+
+  function backgroundWithGradient(canvas, callback) {
+    var g = new fabric.Gradient({
+      type: 'linear',
+      gradientTransform: [0.4 , -0.4, 0.2, 0.1, 3, 5],
+      coords: {
+        x1: 0,
+        y1: 0,
+        x2: 200,
+        y2: 0
+      },
+      colorStops: [{
+        offset: 0,
+        color: 'green'
+      },
+      {
+        offset: 0.5,
+        color: 'white'
+      },
+      {
+        offset: 1,
+        color: 'blue'
+      }]
+    });
+    canvas.set({ backgroundColor: g });
+    canvas.renderAll();
+    callback(canvas.lowerCanvasEl);
+  }
+
+  tests.push({
+    test: 'canvas can have a gradient background',
+    code: backgroundWithGradient,
+    golden: 'backgroundWithGradient.png',
+    percentage: 0.09,
+    width: 300,
+    height: 300,
+  });
+
+  function backgroundWithGradientZoom(canvas, callback) {
+    canvas.setZoom(0.1);
+    var g = new fabric.Gradient({
+      type: 'linear',
+      gradientTransform: [0.4 , -0.4, 0.2, 0.1, 3, 5],
+      coords: {
+        x1: 0,
+        y1: 0,
+        x2: 300,
+        y2: 0
+      },
+      colorStops: [{
+        offset: 0,
+        color: 'green'
+      },
+      {
+        offset: 0.5,
+        color: 'white'
+      },
+      {
+        offset: 1,
+        color: 'blue'
+      }]
+    });
+    canvas.set({ backgroundColor: g });
+    canvas.renderAll();
+    callback(canvas.lowerCanvasEl);
+  }
+
+  tests.push({
+    test: 'canvas can have a gradient background and being zoomed',
+    code: backgroundWithGradientZoom,
+    golden: 'backgroundWithGradientZoom.png',
+    percentage: 0.09,
+    width: 300,
+    height: 300,
+  });
+
+  function backgroundWithGradientNoVpt(canvas, callback) {
+    canvas.setZoom(0.1);
+    canvas.backgroundVpt = false;
+    var g = new fabric.Gradient({
+      type: 'linear',
+      gradientTransform: [0.4 , -0.4, 0.2, 0.1, 3, 5],
+      coords: {
+        x1: 0,
+        y1: 0,
+        x2: 200,
+        y2: 0
+      },
+      colorStops: [{
+        offset: 0,
+        color: 'green'
+      },
+      {
+        offset: 0.5,
+        color: 'white'
+      },
+      {
+        offset: 1,
+        color: 'blue'
+      }]
+    });
+    canvas.set({ backgroundColor: g });
+    canvas.renderAll();
+    callback(canvas.lowerCanvasEl);
+  }
+
+  tests.push({
+    test: 'canvas can have a gradient background with zoom but being unaffected',
+    code: backgroundWithGradientNoVpt,
+    golden: 'backgroundWithGradient.png',
+    percentage: 0.09,
+    width: 300,
+    height: 300,
+  });
+
   tests.forEach(visualTestLoop(QUnit));
 })();
