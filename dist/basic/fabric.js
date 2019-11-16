@@ -1,7 +1,7 @@
 /* build: `node build.js modules=text,serialization,parser,image_filters,easing,animation minifier=uglifyjs` */
 /*! Fabric.js Copyright 2008-2015, Printio (Juriy Zaytsev, Maxim Chernyak) */
 
-var fabric = fabric || { version: '3.2.0' };
+var fabric = fabric || { version: '3.5.0' };
 if (typeof exports !== 'undefined') {
   exports.fabric = fabric;
 }
@@ -613,7 +613,6 @@ fabric.CommonMethods = {
   var sqrt = Math.sqrt,
       atan2 = Math.atan2,
       pow = Math.pow,
-      abs = Math.abs,
       PiBy180 = Math.PI / 180,
       PiBy2 = Math.PI / 2;
 
@@ -775,9 +774,15 @@ fabric.CommonMethods = {
     /**
      * Returns coordinates of points's bounding rectangle (left, top, width, height)
      * @param {Array} points 4 points array
+     * @param {Array} [transform] an array of 6 numbers representing a 2x3 transform matrix
      * @return {Object} Object with left, top, width, height properties
      */
-    makeBoundingBoxFromPoints: function(points) {
+    makeBoundingBoxFromPoints: function(points, transform) {
+      if (transform) {
+        for (var i = 0; i < points.length; i++) {
+          points[i] = fabric.util.transformPoint(points[i], transform);
+        }
+      }
       var xPoints = [points[0].x, points[1].x, points[2].x, points[3].x],
           minX = fabric.util.array.min(xPoints),
           maxX = fabric.util.array.max(xPoints),
@@ -1268,7 +1273,7 @@ fabric.CommonMethods = {
     },
 
     /**
-     * Decomposes standard 2x2 matrix into transform componentes
+     * Decomposes standard 2x3 matrix into transform components
      * @static
      * @memberOf fabric.util
      * @param  {Array} a transformMatrix
@@ -1291,10 +1296,113 @@ fabric.CommonMethods = {
       };
     },
 
+    /**
+     * Returns a transform matrix starting from an object of the same kind of
+     * the one returned from qrDecompose, useful also if you want to calculate some
+     * transformations from an object that is not enlived yet
+     * @static
+     * @memberOf fabric.util
+     * @param  {Object} options
+     * @param  {Number} [options.angle] angle in degrees
+     * @return {Number[]} transform matrix
+     */
+    calcRotateMatrix: function(options) {
+      if (!options.angle) {
+        return fabric.iMatrix.concat();
+      }
+      var theta = fabric.util.degreesToRadians(options.angle),
+          cos = fabric.util.cos(theta),
+          sin = fabric.util.sin(theta);
+      return [cos, sin, -sin, cos, 0, 0];
+    },
+
+    /**
+     * Returns a transform matrix starting from an object of the same kind of
+     * the one returned from qrDecompose, useful also if you want to calculate some
+     * transformations from an object that is not enlived yet.
+     * is called DimensionsTransformMatrix because those properties are the one that influence
+     * the size of the resulting box of the object.
+     * @static
+     * @memberOf fabric.util
+     * @param  {Object} options
+     * @param  {Number} [options.scaleX]
+     * @param  {Number} [options.scaleY]
+     * @param  {Boolean} [options.flipX]
+     * @param  {Boolean} [options.flipY]
+     * @param  {Number} [options.skewX]
+     * @param  {Number} [options.skewX]
+     * @return {Number[]} transform matrix
+     */
+    calcDimensionsMatrix: function(options) {
+      var scaleX = typeof options.scaleX === 'undefined' ? 1 : options.scaleX,
+          scaleY = typeof options.scaleY === 'undefined' ? 1 : options.scaleY,
+          scaleMatrix = [
+            options.flipX ? -scaleX : scaleX,
+            0,
+            0,
+            options.flipY ? -scaleY : scaleY,
+            0,
+            0],
+          multiply = fabric.util.multiplyTransformMatrices,
+          degreesToRadians = fabric.util.degreesToRadians;
+      if (options.skewX) {
+        scaleMatrix = multiply(
+          scaleMatrix,
+          [1, 0, Math.tan(degreesToRadians(options.skewX)), 1],
+          true);
+      }
+      if (options.skewY) {
+        scaleMatrix = multiply(
+          scaleMatrix,
+          [1, Math.tan(degreesToRadians(options.skewY)), 0, 1],
+          true);
+      }
+      return scaleMatrix;
+    },
+
+    /**
+     * Returns a transform matrix starting from an object of the same kind of
+     * the one returned from qrDecompose, useful also if you want to calculate some
+     * transformations from an object that is not enlived yet
+     * @static
+     * @memberOf fabric.util
+     * @param  {Object} options
+     * @param  {Number} [options.angle]
+     * @param  {Number} [options.scaleX]
+     * @param  {Number} [options.scaleY]
+     * @param  {Boolean} [options.flipX]
+     * @param  {Boolean} [options.flipY]
+     * @param  {Number} [options.skewX]
+     * @param  {Number} [options.skewX]
+     * @param  {Number} [options.translateX]
+     * @param  {Number} [options.translateY]
+     * @return {Number[]} transform matrix
+     */
+    composeMatrix: function(options) {
+      var matrix = [1, 0, 0, 1, options.translateX || 0, options.translateY || 0],
+          multiply = fabric.util.multiplyTransformMatrices;
+      if (options.angle) {
+        matrix = multiply(matrix, fabric.util.calcRotateMatrix(options));
+      }
+      if (options.scaleX || options.scaleY || options.skewX || options.skewY || options.flipX || options.flipY) {
+        matrix = multiply(matrix, fabric.util.calcDimensionsMatrix(options));
+      }
+      return matrix;
+    },
+
+    /**
+     * Returns a transform matrix that has the same effect of scaleX, scaleY and skewX.
+     * Is deprecated for composeMatrix. Please do not use it.
+     * @static
+     * @deprecated since 3.4.0
+     * @memberOf fabric.util
+     * @param  {Number} scaleX
+     * @param  {Number} scaleY
+     * @param  {Number} skewX
+     * @return {Number[]} transform matrix
+     */
     customTransformMatrix: function(scaleX, scaleY, skewX) {
-      var skewMatrixX = [1, 0, abs(Math.tan(skewX * PiBy180)), 1],
-          scaleMatrix = [abs(scaleX), 0, 0, abs(scaleY)];
-      return fabric.util.multiplyTransformMatrices(scaleMatrix, skewMatrixX, true);
+      return fabric.util.composeMatrix({ scaleX: scaleX, scaleY: scaleY, skewX: skewX });
     },
 
     /**
@@ -2621,6 +2729,10 @@ if (typeof console !== 'undefined') {
     return false;
   }
 
+  function defaultEasing(t, b, c, d) {
+    return -c * Math.cos(t / d * (Math.PI / 2)) + c + b;
+  }
+
   /**
    * Changes value from one to another within certain period of time, invoking callbacks as value is being changed.
    * @memberOf fabric.util
@@ -2645,7 +2757,7 @@ if (typeof console !== 'undefined') {
           onChange = options.onChange || noop,
           abort = options.abort || noop,
           onComplete = options.onComplete || noop,
-          easing = options.easing || function(t, b, c, d) {return -c * Math.cos(t / d * (Math.PI / 2)) + c + b;},
+          easing = options.easing || defaultEasing,
           startValue = 'startValue' in options ? options.startValue : 0,
           endValue = 'endValue' in options ? options.endValue : 100,
           byValue = options.byValue || endValue - startValue;
@@ -2655,24 +2767,26 @@ if (typeof console !== 'undefined') {
       (function tick(ticktime) {
         // TODO: move abort call after calculation
         // and pass (current,valuePerc, timePerc) as arguments
-        if (abort()) {
-          onComplete(endValue, 1, 1);
-          return;
-        }
         time = ticktime || +new Date();
         var currentTime = time > finish ? duration : (time - start),
             timePerc = currentTime / duration,
             current = easing(currentTime, startValue, byValue, duration),
             valuePerc = Math.abs((current - startValue) / byValue);
-        onChange(current, valuePerc, timePerc);
-        if (time > finish) {
-          options.onComplete && options.onComplete();
+        if (abort()) {
+          onComplete(endValue, 1, 1);
           return;
         }
-        requestAnimFrame(tick);
+        if (time > finish) {
+          onChange(endValue, 1, 1);
+          onComplete(endValue, 1, 1);
+          return;
+        }
+        else {
+          onChange(current, valuePerc, timePerc);
+          requestAnimFrame(tick);
+        }
       })(start);
     });
-
   }
 
   var _requestAnimFrame = fabric.window.requestAnimationFrame       ||
@@ -3720,12 +3834,14 @@ if (typeof console !== 'undefined') {
       parsedDim.height = parseUnit(heightAttr);
       return parsedDim;
     }
-
     minX = -parseFloat(viewBoxAttr[1]);
     minY = -parseFloat(viewBoxAttr[2]);
     viewBoxWidth = parseFloat(viewBoxAttr[3]);
     viewBoxHeight = parseFloat(viewBoxAttr[4]);
-
+    parsedDim.minX = minX;
+    parsedDim.minY = minY;
+    parsedDim.viewBoxWidth = viewBoxWidth;
+    parsedDim.viewBoxHeight = viewBoxHeight;
     if (!missingDimAttr) {
       parsedDim.width = parseUnit(widthAttr);
       parsedDim.height = parseUnit(heightAttr);
@@ -3884,7 +4000,7 @@ if (typeof console !== 'undefined') {
       recursivelyParseGradientsXlink(doc, referencedGradient);
     }
     gradientsAttrs.forEach(function(attr) {
-      if (!gradient.hasAttribute(attr)) {
+      if (referencedGradient && !gradient.hasAttribute(attr) && referencedGradient.hasAttribute(attr)) {
         gradient.setAttribute(attr, referencedGradient.getAttribute(attr));
       }
     });
@@ -4276,8 +4392,8 @@ fabric.ElementsParser = function(elements, callback, options, reviver, parsingOp
     var _this = this;
     return function(obj) {
       var _options;
-      _this.resolveGradient(obj, 'fill');
-      _this.resolveGradient(obj, 'stroke');
+      _this.resolveGradient(obj, el, 'fill');
+      _this.resolveGradient(obj, el, 'stroke');
       if (obj instanceof fabric.Image && obj._originalElement) {
         _options = obj.parsePreserveAspectRatioAttribute(el);
       }
@@ -4299,10 +4415,12 @@ fabric.ElementsParser = function(elements, callback, options, reviver, parsingOp
     return fabric[storage][this.svgUid][id];
   };
 
-  proto.resolveGradient = function(obj, property) {
+  proto.resolveGradient = function(obj, el, property) {
     var gradientDef = this.extractPropertyDefinition(obj, property, 'gradientDefs');
     if (gradientDef) {
-      obj.set(property, fabric.Gradient.fromElement(gradientDef, obj));
+      var opacityAttr = el.getAttribute(property + '-opacity');
+      var gradient = fabric.Gradient.fromElement(gradientDef, obj, opacityAttr, this.options);
+      obj.set(property, gradient);
     }
   };
 
@@ -4339,6 +4457,9 @@ fabric.ElementsParser = function(elements, callback, options, reviver, parsingOp
         objTransformInv,
         clipPath.calcTransformMatrix()
       );
+      if (clipPath.clipPath) {
+        this.resolveClipPath(clipPath);
+      }
       var options = fabric.util.qrDecompose(gTransform);
       clipPath.flipX = false;
       clipPath.flipY = false;
@@ -9124,9 +9245,6 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
       else {
         alternative && alternative(ctx);
       }
-      if (this.strokeUniform) {
-        ctx.setLineDash(ctx.getLineDash().map(function(value) { return value * ctx.lineWidth; }));
-      }
     },
 
     /**
@@ -9217,7 +9335,13 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
       var t = filler.gradientTransform || filler.patternTransform;
       var offsetX = -this.width / 2 + filler.offsetX || 0,
           offsetY = -this.height / 2 + filler.offsetY || 0;
-      ctx.translate(offsetX, offsetY);
+
+      if (filler.gradientUnits === 'percentage') {
+        ctx.transform(this.width, 0, 0, this.height, offsetX, offsetY);
+      }
+      else {
+        ctx.transform(1, 0, 0, 1, offsetX, offsetY);
+      }
       if (t) {
         ctx.transform(t[0], t[1], t[2], t[3], t[4], t[5]);
       }
@@ -9270,6 +9394,10 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
       ctx.restore();
     },
 
+    /**
+     * @private
+     * @param {CanvasRenderingContext2D} ctx Context to render on
+     */
     _renderStroke: function(ctx) {
       if (!this.stroke || this.strokeWidth === 0) {
         return;
@@ -9284,9 +9412,54 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
         ctx.scale(1 / this.scaleX, 1 / this.scaleY);
       }
       this._setLineDash(ctx, this.strokeDashArray, this._renderDashedStroke);
-      this._applyPatternGradientTransform(ctx, this.stroke);
+      if (this.stroke.toLive && this.stroke.gradientUnits === 'percentage') {
+        // need to transform gradient in a pattern.
+        // this is a slow process. If you are hitting this codepath, and the object
+        // is not using caching, you should consider switching it on.
+        // we need a canvas as big as the current object caching canvas.
+        this._applyPatternForTransformedGradient(ctx, this.stroke);
+      }
+      else {
+        this._applyPatternGradientTransform(ctx, this.stroke);
+      }
       ctx.stroke();
       ctx.restore();
+    },
+
+    /**
+     * This function try to patch the missing gradientTransform on canvas gradients.
+     * transforming a context to transform the gradient, is going to transform the stroke too.
+     * we want to transform the gradient but not the stroke operation, so we create
+     * a transformed gradient on a pattern and then we use the pattern instead of the gradient.
+     * this method has drwabacks: is slow, is in low resolution, needs a patch for when the size
+     * is limited.
+     * @private
+     * @param {CanvasRenderingContext2D} ctx Context to render on
+     * @param {fabric.Gradient} filler a fabric gradient instance
+     */
+    _applyPatternForTransformedGradient: function(ctx, filler) {
+      var dims = this._limitCacheSize(this._getCacheCanvasDimensions()),
+          pCanvas = fabric.util.createCanvasElement(), pCtx, retinaScaling = this.canvas.getRetinaScaling(),
+          width = dims.x / this.scaleX / retinaScaling, height = dims.y / this.scaleY / retinaScaling;
+      pCanvas.width = width;
+      pCanvas.height = height;
+      pCtx = pCanvas.getContext('2d');
+      pCtx.beginPath(); pCtx.moveTo(0, 0); pCtx.lineTo(width, 0); pCtx.lineTo(width, height);
+      pCtx.lineTo(0, height); pCtx.closePath();
+      pCtx.translate(width / 2, height / 2);
+      pCtx.scale(
+        dims.zoomX / this.scaleX / retinaScaling,
+        dims.zoomY / this.scaleY / retinaScaling
+      );
+      this._applyPatternGradientTransform(pCtx, filler);
+      pCtx.fillStyle = filler.toLive(ctx);
+      pCtx.fill();
+      ctx.translate(-this.width / 2 - this.strokeWidth / 2, -this.height / 2 - this.strokeWidth / 2);
+      ctx.scale(
+        retinaScaling * this.scaleX / dims.zoomX,
+        retinaScaling * this.scaleY / dims.zoomY
+      );
+      ctx.strokeStyle = pCtx.createPattern(pCanvas, 'no-repeat');
     },
 
     /**
@@ -9403,9 +9576,10 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
       options || (options = { });
 
       var utils = fabric.util, origParams = utils.saveObjectTransform(this),
+          originalGroup = this.group,
           originalShadow = this.shadow, abs = Math.abs,
           multiplier = (options.multiplier || 1) * (options.enableRetinaScaling ? fabric.devicePixelRatio : 1);
-
+      delete this.group;
       if (options.withoutTransform) {
         utils.resetObjectTransform(this);
       }
@@ -9427,6 +9601,7 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
         else {
           scaling = this.getObjectScaling();
         }
+        // consider non scaling shadow.
         shadowOffset.x = 2 * Math.round(abs(shadow.offsetX) + shadowBlur) * (abs(scaling.scaleX));
         shadowOffset.y = 2 * Math.round(abs(shadow.offsetY) + shadowBlur) * (abs(scaling.scaleY));
       }
@@ -9449,6 +9624,9 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
       var canvasEl = canvas.toCanvasElement(multiplier || 1, options);
       this.shadow = originalShadow;
       this.canvas = originalCanvas;
+      if (originalGroup) {
+        this.group = originalGroup;
+      }
       this.set(origParams).setCoords();
       // canvas.dispose will call image.dispose that will nullify the elements
       // since this canvas is a simple element for the process, we remove references
@@ -9509,6 +9687,7 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
 
     /**
      * Sets gradient (fill or stroke) of an object
+     * percentages for x1,x2,y1,y2,r1,r2 together with gradientUnits 'pixels', are not supported.
      * <b>Backwards incompatibility note:</b> This method was named "setGradientFill" until v1.1.0
      * @param {String} property Property name 'stroke' or 'fill'
      * @param {Object} [options] Options object
@@ -9523,6 +9702,7 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
      * @param {Object} [options.gradientTransform] transformMatrix for gradient
      * @return {fabric.Object} thisArg
      * @chainable
+     * @deprecated since 3.4.0
      * @see {@link http://jsfiddle.net/fabricjs/58y8b/|jsFiddle demo}
      * @example <caption>Set linear gradient</caption>
      * object.setGradient('fill', {
@@ -9567,7 +9747,7 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
         x2: options.x2,
         y2: options.y2
       };
-
+      gradient.gradientUnits = options.gradientUnits || 'pixels';
       if (options.r1 || options.r2) {
         gradient.coords.r1 = options.r1;
         gradient.coords.r2 = options.r2;
@@ -9589,6 +9769,7 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
      * @param {Function} [callback] Callback to invoke when image set as a pattern
      * @return {fabric.Object} thisArg
      * @chainable
+     * @deprecated since 3.5.0
      * @see {@link http://jsfiddle.net/fabricjs/QT3pa/|jsFiddle demo}
      * @example <caption>Set pattern</caption>
      * object.setPatternFill({
@@ -9609,6 +9790,7 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
      * @param {Number} [options.offsetY=0] Shadow vertical offset
      * @return {fabric.Object} thisArg
      * @chainable
+     * @deprecated since 3.5.0
      * @see {@link http://jsfiddle.net/fabricjs/7gvJG/|jsFiddle demo}
      * @example <caption>Set shadow with string notation</caption>
      * object.setShadow('2px 2px 10px rgba(0,0,0,0.2)');
@@ -9630,6 +9812,7 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
      * Sets "color" of an instance (alias of `set('fill', &hellip;)`)
      * @param {String} color Color value
      * @return {fabric.Object} thisArg
+     * @deprecated since 3.5.0
      * @chainable
      */
     setColor: function(color) {
@@ -10537,11 +10720,7 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
      * @return {Array} rotation matrix for the object
      */
     _calcRotateMatrix: function() {
-      if (this.angle) {
-        var theta = degreesToRadians(this.angle), cos = fabric.util.cos(theta), sin = fabric.util.sin(theta);
-        return [cos, sin, -sin, cos, 0, 0];
-      }
-      return fabric.iMatrix.concat();
+      return fabric.util.calcRotateMatrix(this);
     },
 
     /**
@@ -10586,40 +10765,40 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
       return matrix;
     },
 
+    /**
+     * calculate transform matrix that represents the current transformations from the
+     * object's properties, this matrix does not include the group transformation
+     * @return {Array} transform matrix for the object
+     */
     calcOwnMatrix: function() {
       var key = this.transformMatrixKey(true), cache = this.ownMatrixCache || (this.ownMatrixCache = {});
       if (cache.key === key) {
         return cache.value;
       }
-      var matrix = this._calcTranslateMatrix(),
-          rotateMatrix,
-          dimensionMatrix = this._calcDimensionsTransformMatrix(this.skewX, this.skewY, true);
-      if (this.angle) {
-        rotateMatrix = this._calcRotateMatrix();
-        matrix = multiplyMatrices(matrix, rotateMatrix);
-      }
-      matrix = multiplyMatrices(matrix, dimensionMatrix);
+      var tMatrix = this._calcTranslateMatrix();
+      this.translateX = tMatrix[4];
+      this.translateY = tMatrix[5];
       cache.key = key;
-      cache.value = matrix;
-      return matrix;
+      cache.value = fabric.util.composeMatrix(this);
+      return cache.value;
     },
 
+    /*
+     * Calculate object dimensions from its properties
+     * @private
+     * @deprecated since 3.4.0, please use fabric.util._calcDimensionsTransformMatrix
+     * not including or including flipX, flipY to emulate the flipping boolean
+     * @return {Object} .x width dimension
+     * @return {Object} .y height dimension
+     */
     _calcDimensionsTransformMatrix: function(skewX, skewY, flipping) {
-      var skewMatrix,
-          scaleX = this.scaleX * (flipping && this.flipX ? -1 : 1),
-          scaleY = this.scaleY * (flipping && this.flipY ? -1 : 1),
-          scaleMatrix = [scaleX, 0, 0, scaleY, 0, 0];
-      if (skewX) {
-        skewMatrix = [1, 0, Math.tan(degreesToRadians(skewX)), 1];
-        scaleMatrix = multiplyMatrices(scaleMatrix, skewMatrix, true);
-      }
-      if (skewY) {
-        skewMatrix = [1, Math.tan(degreesToRadians(skewY)), 0, 1];
-        scaleMatrix = multiplyMatrices(scaleMatrix, skewMatrix, true);
-      }
-      return scaleMatrix;
+      return fabric.util.calcDimensionsMatrix({
+        skewX: skewX,
+        skewY: skewY,
+        scaleX: this.scaleX * (flipping && this.flipX ? -1 : 1),
+        scaleY: this.scaleY * (flipping && this.flipY ? -1 : 1)
+      });
     },
-
 
     /*
      * Calculate object dimensions from its properties
@@ -10684,12 +10863,13 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
               x: dimX,
               y: dimY
             }],
-          i, transformMatrix = this._calcDimensionsTransformMatrix(skewX, skewY, false),
-          bbox;
-      for (i = 0; i < points.length; i++) {
-        points[i] = fabric.util.transformPoint(points[i], transformMatrix);
-      }
-      bbox = fabric.util.makeBoundingBoxFromPoints(points);
+          transformMatrix = fabric.util.calcDimensionsMatrix({
+            scaleX: this.scaleX,
+            scaleY: this.scaleY,
+            skewX: this.skewX,
+            skewY: this.skewY,
+          }),
+          bbox = fabric.util.makeBoundingBoxFromPoints(points, transformMatrix);
       return this._finalizeDimensions(bbox.width, bbox.height);
     },
 
@@ -14286,7 +14466,19 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
    * @param {Function} [callback] Callback to invoke when an group instance is created
    */
   fabric.Group.fromObject = function(object, callback) {
-    fabric.util.enlivenObjects(object.objects, function(enlivenedObjects) {
+    var objects = object.objects,
+        options = fabric.util.object.clone(object, true);
+    delete options.objects;
+    if (typeof objects === 'string') {
+      // it has to be an url or something went wrong.
+      fabric.loadSVGFromURL(objects, function (elements) {
+        var group = fabric.util.groupSVGElements(elements, object, objects);
+        group.set(options);
+        callback && callback(group);
+      });
+      return;
+    }
+    fabric.util.enlivenObjects(objects, function(enlivenedObjects) {
       fabric.util.enlivenObjects([object.clipPath], function(enlivedClipPath) {
         var options = fabric.util.object.clone(object, true);
         options.clipPath = enlivedClipPath[0];
@@ -14831,7 +15023,8 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
     },
 
     /**
-     * @private, needed to check if image needs resize
+     * needed to check if image needs resize
+     * @private
      */
     _needsResize: function() {
       var scale = this.getTotalObjectScaling();
@@ -19691,7 +19884,7 @@ fabric.Image.filters.BaseFilter.fromObject = function(object, callback) {
      * possibly overridden to accommodate different measure logic or
      * to hook some external lib for character measurement
      * @private
-     * @param {String} char to be measured
+     * @param {String} _char, char to be measured
      * @param {Object} charStyle style of char to be measured
      * @param {String} [previousChar] previous char
      * @param {Object} [prevCharStyle] style of previous char
@@ -19737,12 +19930,12 @@ fabric.Image.filters.BaseFilter.fromObject = function(object, callback) {
 
     /**
      * Computes height of character at given position
-     * @param {Number} line the line number
-     * @param {Number} char the character number
+     * @param {Number} line the line index number
+     * @param {Number} _char the character index number
      * @return {Number} fontSize of the character
      */
-    getHeightOfChar: function(line, char) {
-      return this.getValueOfPropertyAt(line, char, 'fontSize');
+    getHeightOfChar: function(line, _char) {
+      return this.getValueOfPropertyAt(line, _char, 'fontSize');
     },
 
     /**
