@@ -451,6 +451,28 @@
     });
   });
 
+  QUnit.test('parseSVGFromString path fill-opacity with gradient', function(assert) {
+    var done = assert.async();
+    var string = '<?xml version="1.0" encoding="UTF-8"?>' +
+    '<svg version="1.2" baseProfile="tiny" xml:id="svg-root" width="300" height="400" ' +
+      'viewBox="0 0 300 400" xmlns="http://www.w3.org/2000/svg" ' +
+      'xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xe="http://www.w3.org/2001/xml-events">' +
+        '<linearGradient id="red-to-red">' +
+          '<stop offset="0%" stop-color="#00ff00" stop-opacity="0.5"/>' +
+          '<stop offset="100%" stop-color="#ff0000"/>' +
+        '</linearGradient>' +
+        '<path d="M 0 0 l 100 0 l 0 100 l -100 0 z" fill="url(#red-to-red)" fill-opacity="0.5"/>' +
+    '</svg>';
+
+    fabric.loadSVGFromString(string, function(objects) {
+      assert.equal(objects[0].fill.colorStops[0].opacity, 0.5);
+      assert.equal(objects[0].fill.colorStops[0].color, 'rgb(255,0,0)');
+      assert.equal(objects[0].fill.colorStops[1].opacity, 0.25);
+      assert.equal(objects[0].fill.colorStops[1].color, 'rgb(0,255,0)');
+      done();
+    });
+  });
+
   QUnit.test('parseSVGFromString with svg:namespace', function(assert) {
     var done = assert.async();
     var string = '<?xml version="1.0" standalone="no"?><svg width="100%" height="100%" version="1.1" xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">' +
@@ -693,6 +715,29 @@
 
     fabric.cssRules[svgUid] = fabric.getCSSRules(doc);
     assert.deepEqual(fabric.cssRules[svgUid], expectedObject);
+  });
+
+  QUnit.test('parseSVGFromString with nested clippath', function(assert) {
+    var done = assert.async();
+    var string = '<svg viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">' +
+                    '<clipPath id="b">' +
+                      '<rect id="c" transform="matrix(-1 -4.4884e-11 4.4884e-11 -1 128 55.312)" x="44" y="4" width="40" height="47.31"/>' +
+                      '</clipPath>' +
+                      '<g clip-path="url(#b)">' +
+                        '<clipPath id="i">' +
+                        '<polygon id="j" points="50.87 3.55 45.67 12.48 44.86 23.39 47.16 24.88 48.47 21.35 69.12 11.86 78.16 18.16 80.86 24.69 83.14 22.03 82.25 3.55"/>' +
+                      '</clipPath>' +
+                      '<g clip-path="url(#i)">' +
+                        '<path d="m59.09 7.55c-5.22 1.85-5.74-1.42-5.74-1.42-2.83 1.41-0.97 4.45-0.97 4.45s-2.87-0.21-4.1 2.27c-1.29 2.6-0.15 4.59-0.15 4.59s-2.76 1.75-1.68 4.95c0.72 2.12 2.87 2.97 2.87 2.97-0.26 4.57 1.18 6.79 1.18 6.79s1.79-7.85 1.62-9.05c0 0 3.3-0.66 7.05-2.8 2.53-1.45 4.26-3.15 7.11-3.79 4.33-0.98 5.3 2.16 5.3 2.16s4.01-0.77 5.22 4.8c0.5 2.29 0.71 6.12 0.98 8.45-0.02-0.2 1.49-2.72 1.75-5.28 0.1-0.95 1.54-3.26 1.97-4.99 0.94-3.75-0.29-6.7-0.88-7.58-1.07-1.61-3.61-3.83-5.52-3.51 0.1-2.04-1.51-3.94-3.45-4.59-5.29-1.8-11 1.02-12.56 1.58z" fill="none" stroke="#402720" stroke-miterlimit="10" stroke-width="2"/>' +
+                      '</g>' +
+                    '</g>' +
+                  '</svg>';
+
+    fabric.loadSVGFromString(string, function(objects) {
+      assert.equal(objects[0].clipPath.type, 'polygon');
+      assert.equal(objects[0].clipPath.clipPath.type, 'rect');
+      done();
+    });
   });
 
 })();
